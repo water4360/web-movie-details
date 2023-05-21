@@ -1,14 +1,11 @@
 # web-movie-details
 open API를 활용한 영화소개 페이지입니다.<br>
-메인페이지에서 개봉예정 영화목록을 확인할 수 있고 <br>영화포스터 클릭시 트레일러가 있는 상세페이지로 이동합니다.
+메인페이지에서 개봉예정 영화목록을 확인할 수 있고 <br>영화포스터 클릭시 트레일러가 있는 상세페이지로 이동합니다.<br>
+[웹사이트 바로가기](https://water4360.github.io/web-movie-details/)
 <br><br>
 <b>*하단의 DB를 이용하므로 영화에 따라 세부 정보가 누락되어 있을 수도 있습니다.</b>
 
 - 참고 사이트(https://themoviedb.org)
-    
-  [Getting Started](https://developer.themoviedb.org/docs)
-    
-  [개봉예정영화정보](https://api.themoviedb.org/3/movie/upcoming?api_key=a64533e7ece6c72731da47c9c8bc691f&language=ko-KR&page=1)
 
 ## 메인페이지
 영화포스터에 마우스 행오버시 평점, 타이틀 보여주고 포스터 하이라이트 <br>
