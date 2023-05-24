@@ -18,7 +18,7 @@
 <body onload="loadMovies()">
     <header>Hari Cine :: ma, Igeo Boatna</header>
     <div id="container">
-        
+
     </div>
 
 
@@ -45,7 +45,7 @@
                             <div id="movie-title">${movie.title}</div></div></div>`;
                 $('#container').append(card);
             });
-            
+
             // 버튼 숨기기 되긴 됨.
             // $('button').hide();
 
@@ -53,7 +53,7 @@
             //card를 클릭시 해당 영화 상세페이지로 이동.
             $('.card').click(function () {
                 const movieId = $(this).data('movieid');
-                
+
 
                 location.href = `movieDetails/details.html?movieId=${movieId}`;
             });
