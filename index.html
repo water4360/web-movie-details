@@ -5,73 +5,155 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hari Cine, Ma Igeo Boatna</title>
 
     <!-- 스크립트 -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
     <!-- 스타일시트 -->
     <link rel="stylesheet" href="index.css" />
 
 </head>
+<style>
+    #preview {
+        position: relative;
+    }
 
-<body onload="loadMovies()">
-    <header>Hari Cine :: ma, Igeo Boatna</header>
-    <div id="container">
+    #black-top,
+    #black-bottom {
+        position: absolute;
+        width: 100%;
+        height: 60px;
+        background-color: rgb(0, 0, 0);
+        opacity: 1;
+        z-index: 1;
+    }
 
+    #black-top {
+        top: 0;
+    }
+
+    #black-bottom {
+        bottom: 0;
+    }
+</style>
+
+<body>
+    <header>하리네 영화관</header>
+    <div id="prevContainer">
+        <div id="preview" style="position: relative;">
+            <div id="black-top" z-index="1"></div>
+            <iframe id="previewIframe" z-index="0" width="100%" height="360" frameborder="0" allowfullscreen></iframe>
+            <div id="black-bottom" z-index="1"></div>
+        </div>
+
+        <div id="app">
+            <input id="query" type="text" placeholder="제목을 입력하세요" v-model="query" style="border: none; width: 300px;">
+            <div id="searchResult" v-if="query">
+                <template v-if="filteredMovies.length > 0">
+                    <b>[{{ query }}]</b> 에 대한 결과, <br>
+                    총 {{ filteredMovies.length }} 개의 영화를 찾았어요
+                </template>
+                <template v-else>
+                    <b>[{{ query }}]</b> 에 대한 결과가 없어요 <br>
+                </template>
+
+            </div>
+            <div class="grid">
+                <div class="card" v-for="movie in filteredMovies" :key="movie.id" @click="goToMovieDetails(movie.id)">
+                    <img :src="getPosterUrl(movie.poster_path)" :alt="movie.title">
+                    <div class="movie-details">
+                        <div id="movie-tagline">개봉일 {{movie.release_date}}</div>
+                        <div id="movie-rate">{{ getRatingStars(movie.vote_average) }}</div>
+                        <div id="movie-title">{{ movie.title }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-
     <script>
-        //영화정보 받아오기(https://api.themoviedb.org)
-        async function loadMovies() {
-            const response = await fetch('https://api.themoviedb.org/3/movie/upcoming?api_key=a64533e7ece6c72731da47c9c8bc691f&language=ko-KR&page=1');
+        new Vue({
+            el: '#app',
+            data: {
+                query: '',
+                movies: [],
+            },
+            created() {
+                this.loadMovies().then(() => {
+                    this.loadRandomTrailer();
+                });
+            },
+            computed: {
+                filteredMovies() {
+                    return this.movies.filter(movie => {
+                        return movie.title.includes(this.query);
+                    });
+                },
+            },
+            methods: {
+                async loadMovies() {
+                    const response = await fetch('https://api.themoviedb.org/3/movie/upcoming?api_key=a64533e7ece6c72731da47c9c8bc691f&language=ko-KR&page=1');
+                    const data = await response.json();
+                    this.movies = data.results;
+                },
+                getRatingStars(rating) {
+                    const maxRating = 10;
+                    const star = '⭐';
 
-            //fetch에서 데이터 받아오기
-            const data = await response.json();
+                    if (rating === 0) {
+                        return '첫 평가를 해주세요!';
+                    }
 
-            //다수의 영화 저장
-            const movies = data.results;
+                    const numberOfStars = Math.round((rating / maxRating) * 5);
+                    return star.repeat(numberOfStars);
+                },
+                getPosterUrl(posterPath) {
+                    return `https://image.tmdb.org/t/p/w500${posterPath}`;
+                },
+                goToMovieDetails(movieId) {
+                    location.href = `movieDetails/details.html?movieId=${movieId}`;
+                },
+                async loadRandomTrailer() {
+                    const maxAttempts = 10; // Maximum attempts to find a movie with a trailer
+                    let attempt = 1;
 
-            //영화개별정보를 card에 저장.
-            movies.forEach(movie => {
-                const rating = getRatingStars(movie.vote_average);
-                const card = `
-                <div class="card" data-movieid="${movie.id}">
-                            <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}">
-                            <div class="movie-details">
-                                <div id="movie-rate">${rating}</div>
-                            <div id="movie-title">${movie.title}</div></div></div>`;
-                $('#container').append(card);
-            });
+                    const findMovieWithTrailer = async () => {
+                        // 무작위 영화 가져오기
+                        const randomMovie = this.movies[Math.floor(Math.random() * this.movies.length)];
 
-            // 버튼 숨기기 되긴 됨.
-            // $('button').hide();
+                        if (randomMovie) {
+                            // 무작위 영화 예고편 URL 가져오기
+                            const trailerResponse = await fetch(`https://api.themoviedb.org/3/movie/${randomMovie.id}/videos?api_key=a64533e7ece6c72731da47c9c8bc691f&language=ko-KR`);
+                            const trailerData = await trailerResponse.json();
+                            const trailers = trailerData.results;
 
+                            // iframe에 무작위 영화 예고편 URL 설정
+                            if (trailers.length > 0) {
+                                const trailerUrl = `https://www.youtube.com/embed/${trailers[0].key}?autoplay=1&mute=1&amp;loop=1&playlist=${trailers[0].key}`;
+                                document.getElementById('previewIframe').src = trailerUrl;
+                            } else {
+                                // 예고편이 없는 경우 다른 영화를 찾기 위해 재시도
+                                if (attempt < maxAttempts) {
+                                    attempt++;
+                                    findMovieWithTrailer();
+                                } else {
+                                    // 트레일러가 없는 경우에 대한 최종 처리
+                                    document.getElementById('preview').textContent = '예고편이 없는 영화가 없습니다.';
+                                    document.getElementById('previewIframe').style.display = 'none';
+                                }
+                            }
+                        } else {
+                            // 무작위 영화가 없는 경우에 대한 처리
+                            document.getElementById('preview').textContent = '무작위 영화가 없습니다.';
+                            document.getElementById('previewIframe').style.display = 'none';
+                        }
+                    };
 
-            //card를 클릭시 해당 영화 상세페이지로 이동.
-            $('.card').click(function () {
-                const movieId = $(this).data('movieid');
-
-
-                location.href = `movieDetails/details.html?movieId=${movieId}`;
-            });
-        }
-        // 평점을 ⭐로 표기
-        function getRatingStars(rating) {
-            const maxRating = 10; // 최대 평점
-            const star = '⭐'; // ⭐ 아이콘
-
-            if (rating === 0) {
-                return '첫 평가를 해주세요!';
-            }
-
-            const numberOfStars = Math.round((rating / maxRating) * 5); // 평점을 5개의 ⭐로 매핑
-            const stars = star.repeat(numberOfStars); // ⭐ 반복하여 문자열 생성
-
-            return stars;
-        }
+                    // 최초 예고편 로드 시도
+                    findMovieWithTrailer();
+                },
+            },
+        });
     </script>
 </body>
 
